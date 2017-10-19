@@ -1,6 +1,5 @@
 'use strict';
 
-const noop = () => { };
 let id = 0;
 
 function callAnyOnce(fn1, fn2, context) {
@@ -76,13 +75,7 @@ class Promise {
                 continue;
               }
 
-              // TODO maybe this can be removed since it is handled in Promise.resolve
-              let then = getThenFromPromise(result)
-              if (typeof then === 'function') {
-                then.call(result, deferred.resolve, deferred.reject);
-              } else {
-                deferred.resolve(result);
-              }
+              deferred.resolve(result);
             } catch (error) {
               deferred.reject(error);
             }
@@ -109,12 +102,7 @@ class Promise {
                 continue;
               }
 
-              let then = getThenFromPromise(result)
-              if (typeof then === 'function') {
-                then.call(result, deferred.resolve, deferred.reject);
-              } else {
-                deferred.resolve(result);
-              }
+              deferred.resolve(result);
             } catch (error) {
               deferred.reject(error);
             }
