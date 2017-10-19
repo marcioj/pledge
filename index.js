@@ -58,60 +58,37 @@ class Promise {
   }
 
   _triggerHandlersForCurrentStatus() {
-    if (this.status === 'resolved') {
-      setImmediate(() => {
-        while (this.deferreds.length) {
-          let deferred = this.deferreds.shift();
-          let handler = deferred.promise.onFulfill;
-
-          if (handler) {
-            try {
-              let result = handler(this.value);
-
-              if (result && result.parent === this) {
-                deferred.reject(
-                  new TypeError('Cannot return the promise itself inside onFullfill handler')
-                );
-                continue;
-              }
-
-              deferred.resolve(result);
-            } catch (error) {
-              deferred.reject(error);
-            }
-          } else {
-            deferred.resolve(this.value);
-          }
-        }
-      });
+    if (this.status === 'pending') {
+      return
     }
-    if (this.status === 'rejected') {
-      setImmediate(() => {
-        while (this.deferreds.length) {
-          let deferred = this.deferreds.shift();
-          let handler = deferred.promise.onRejected;
 
-          if (handler) {
-            try {
-              let result = handler(this.value);
+    setImmediate(() => {
+      while (this.deferreds.length) {
+        let deferred = this.deferreds.shift();
+        let handler = this.status === 'resolved' ? deferred.promise.onFulfill : deferred.promise.onRejected;
 
-              if (result && result.parent === this) {
-                deferred.reject(
-                  new TypeError('Cannot return the promise itself inside onReject handler')
-                );
-                continue;
-              }
+        if (handler) {
+          try {
+            let result = handler(this.value);
 
-              deferred.resolve(result);
-            } catch (error) {
-              deferred.reject(error);
+            if (result && result.parent === this) {
+              deferred.reject(new TypeError('Chaining cycle detected'));
+              continue;
             }
+
+            deferred.resolve(result);
+          } catch (error) {
+            deferred.reject(error);
+          }
+        } else {
+          if (this.status === 'resolved') {
+            deferred.resolve(this.value);
           } else {
             deferred.reject(this.value);
           }
         }
-      });
-    }
+      }
+    });
   }
 
   _resolvePromise(value) {
@@ -162,15 +139,3 @@ Promise.reject = (value) => {
 }
 
 module.exports = Promise;
-
-if (!module.parent) { // tests
-  var dummy = { blah: 1 };
-  var sentinel = { foo: 1 };
-  var sentinel2 = { foo: 2 };
-  var sentinel3 = { foo: 3 };
-  var assert = require('assert');
-  var nonFunction = undefined
-
-  // resolve/reject soh consideram o primeiro valor
-  // promise soh muda de status uma vez q o valor foi resolvido
-}
