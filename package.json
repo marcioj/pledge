@@ -1,0 +1,16 @@
+{
+  "name": "pledge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "promises-tests index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mocha": "^4.0.1",
+    "promises-tests": "0.0.2"
+  }
+}
