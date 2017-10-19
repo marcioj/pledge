@@ -32,7 +32,6 @@ class Promise {
     this.onFulfill = undefined;
     this.onRejected = undefined;
     this.status = 'pending';
-    this.parent = undefined;
     let { fn1: resolve, fn2: reject } = callAnyOnce(this._resolvePromise, this._rejectPromise, this)
     func(resolve, reject)
   }
@@ -40,7 +39,6 @@ class Promise {
   then(onFulfill, onRejected) {
     let deferred = Promise.deferred();
     let promise = deferred.promise;
-    promise.parent = this;
 
     if (typeof onFulfill === 'function') {
       promise.onFulfill = onFulfill;
@@ -70,12 +68,6 @@ class Promise {
         if (handler) {
           try {
             let result = handler(this.value);
-
-            if (result && result.parent === this) {
-              deferred.reject(new TypeError('Chaining cycle detected'));
-              continue;
-            }
-
             deferred.resolve(result);
           } catch (error) {
             deferred.reject(error);
@@ -92,6 +84,11 @@ class Promise {
   }
 
   _resolvePromise(value) {
+    if (value === this) {
+      this._rejectPromise(new TypeError('Chaining cycle detected'))
+      return
+    }
+
     let group = callAnyOnce(this._resolvePromise, this._rejectPromise, this)
 
     try {
@@ -111,6 +108,11 @@ class Promise {
   }
 
   _rejectPromise(value) {
+    if (value === this) {
+      this._rejectPromise(new TypeError('Chaining cycle detected'))
+      return
+    }
+
     this.value = value;
     this.status = 'rejected';
     this._triggerHandlersForCurrentStatus();
